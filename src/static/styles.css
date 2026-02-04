@@ -218,3 +218,20 @@ footer {
   color: #333;
   font-size: 14px;
 }
+
+.remove-btn {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: #c62828;
+  font-weight: 700;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.remove-btn:hover {
+  background-color: rgba(198, 40, 40, 0.08);
+}

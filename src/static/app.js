@@ -68,7 +68,53 @@ document.addEventListener("DOMContentLoaded", () => {
         details.participants.forEach((p) => {
           const li = document.createElement("li");
           li.className = "participant-item";
-          li.innerHTML = `<span class="avatar small" title="${p}">${getInitials(p)}</span><span class="participant-email">${p}</span>`;
+
+          const avatarSmall = document.createElement("span");
+          avatarSmall.className = "avatar small";
+          avatarSmall.title = p;
+          avatarSmall.textContent = getInitials(p);
+
+          const emailSpan = document.createElement("span");
+          emailSpan.className = "participant-email";
+          emailSpan.textContent = p;
+
+          const removeBtn = document.createElement("button");
+          removeBtn.className = "remove-btn";
+          removeBtn.type = "button";
+          removeBtn.setAttribute("aria-label", `Remove ${p}`);
+          removeBtn.textContent = "\u2715";
+
+          removeBtn.addEventListener("click", async () => {
+            try {
+              const res = await fetch(`/activities/${encodeURIComponent(name)}/participants?email=${encodeURIComponent(p)}`, {
+                method: "DELETE",
+              });
+
+              const data = await res.json();
+
+              if (res.ok) {
+                messageDiv.textContent = data.message;
+                messageDiv.className = "success";
+                messageDiv.classList.remove("hidden");
+                fetchActivities();
+                setTimeout(() => messageDiv.classList.add("hidden"), 4000);
+              } else {
+                messageDiv.textContent = data.detail || "Failed to remove participant";
+                messageDiv.className = "error";
+                messageDiv.classList.remove("hidden");
+              }
+            } catch (err) {
+              messageDiv.textContent = "Failed to remove participant. Please try again.";
+              messageDiv.className = "error";
+              messageDiv.classList.remove("hidden");
+              console.error("Error removing participant:", err);
+            }
+          });
+
+          li.appendChild(avatarSmall);
+          li.appendChild(emailSpan);
+          li.appendChild(removeBtn);
+
           participantList.appendChild(li);
         });
 
@@ -153,4 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize app
   fetchActivities();
+
+  // Auto-refresh activities every 3 seconds
+  setInterval(fetchActivities, 3000);
 });
