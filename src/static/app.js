@@ -4,6 +4,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
 
+  // Escapa texto para uso seguro dentro de innerHTML (especialmente emails)
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, (ch) => {
+      const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+      return map[ch] || ch;
+    });
+  }
+
   // Function to fetch activities from API
   async function fetchActivities() {
     try {
@@ -18,13 +26,28 @@ document.addEventListener("DOMContentLoaded", () => {
         const activityCard = document.createElement("div");
         activityCard.className = "activity-card";
 
-        const spotsLeft = details.max_participants - details.participants.length;
+        const participants = Array.isArray(details.participants) ? details.participants : [];
+        const spotsLeft = details.max_participants - participants.length;
+
+        const participantsHtml =
+          participants.length > 0
+            ? `<div class="participants-list">
+                ${participants.map((p) => `<span class="participant-chip">${escapeHtml(p)}</span>`).join("")}
+               </div>`
+            : `<p class="participants-empty">Aún no hay participantes.</p>`;
 
         activityCard.innerHTML = `
           <h4>${name}</h4>
           <p>${details.description}</p>
           <p><strong>Schedule:</strong> ${details.schedule}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
+
+          <details class="participants">
+            <summary>
+              Participantes <span class="participants-count">${participants.length}</span>
+            </summary>
+            ${participantsHtml}
+          </details>
         `;
 
         activitiesList.appendChild(activityCard);
@@ -62,6 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        fetchActivities(); // <-- Recarga la lista de actividades tras alta exitosa
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
