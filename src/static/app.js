@@ -26,13 +26,20 @@ document.addEventListener("DOMContentLoaded", () => {
         const activityCard = document.createElement("div");
         activityCard.className = "activity-card";
 
+
         const participants = Array.isArray(details.participants) ? details.participants : [];
         const spotsLeft = details.max_participants - participants.length;
 
+        // Participantes sin bullet-points y con botón X
         const participantsHtml =
           participants.length > 0
-            ? `<div class="participants-list">
-                ${participants.map((p) => `<span class="participant-chip">${escapeHtml(p)}</span>`).join("")}
+            ? `<div class="participants-list no-bullets">
+                ${participants.map((p) => `
+                  <span class="participant-chip">
+                    ${escapeHtml(p)}
+                    <button class="remove-participant" data-activity="${encodeURIComponent(name)}" data-email="${escapeHtml(p)}" title="Eliminar participante">✖</button>
+                  </span>
+                `).join("")}
                </div>`
             : `<p class="participants-empty">Aún no hay participantes.</p>`;
 
@@ -49,6 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
             ${participantsHtml}
           </details>
         `;
+
 
         activitiesList.appendChild(activityCard);
 
@@ -102,6 +110,29 @@ document.addEventListener("DOMContentLoaded", () => {
       messageDiv.className = "error";
       messageDiv.classList.remove("hidden");
       console.error("Error signing up:", error);
+    }
+  });
+
+  // Delegación de eventos para eliminar participante
+  document.addEventListener("click", async (event) => {
+    if (event.target.classList.contains("remove-participant")) {
+      const activity = event.target.getAttribute("data-activity");
+      const email = event.target.getAttribute("data-email");
+      if (confirm(`¿Eliminar a ${email} de la actividad "${decodeURIComponent(activity)}"?`)) {
+        try {
+          const response = await fetch(`/activities/${activity}/remove?email=${encodeURIComponent(email)}`, {
+            method: "POST"
+          });
+          if (response.ok) {
+            fetchActivities();
+          } else {
+            const result = await response.json();
+            alert(result.detail || "No se pudo eliminar el participante.");
+          }
+        } catch (error) {
+          alert("Error al eliminar participante.");
+        }
+      }
     }
   });
 

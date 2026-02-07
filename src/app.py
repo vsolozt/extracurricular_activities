@@ -95,14 +95,25 @@ def signup_for_activity(activity_name: str, email: str):
     if activity_name not in activities:
         raise HTTPException(status_code=404, detail="Activity not found")
 
-# comprobar que el estudiante no se ha inscrito ya
+    # comprobar que el estudiante no se ha inscrito ya
     if email in activities[activity_name]["participants"]:
         raise HTTPException(
             status_code=400, detail="Student already signed up for this activity")
-    
-    # Get the specific activity
     activity = activities[activity_name]
-
+    # Comprobar si hay plazas disponibles
+    if len(activity["participants"]) >= activity["max_participants"]:
+        raise HTTPException(status_code=400, detail="No hay plazas disponibles para esta actividad")
     # Add student
     activity["participants"].append(email)
     return {"message": f"Signed up {email} for {activity_name}"}
+
+
+# Endpoint para eliminar participante de una actividad
+@app.post("/activities/{activity_name}/remove")
+def remove_participant(activity_name: str, email: str):
+    if activity_name not in activities:
+        raise HTTPException(status_code=404, detail="Activity not found")
+    if email not in activities[activity_name]["participants"]:
+        raise HTTPException(status_code=404, detail="Participant not found in this activity")
+    activities[activity_name]["participants"].remove(email)
+    return {"message": f"Removed {email} from {activity_name}"}
